@@ -30,33 +30,46 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 #include <unistd.h>     // UNIX standard function definitions
 #include <fcntl.h>      // File control definitions
 #include <errno.h>      // Error number definitions
-#include <termios.h>    // POSIX terminal control definitions
+// #include <termios.h>    // POSIX terminal control definitions
+// #include <sys/ioctl.h>
+// #include "/usr/include/asm-generic/termbits.h"
+// #include "/usr/include/asm-generic/ioctls.h"
 
-class SBUS{
-	public:
-    	SBUS(std::string tty);
-      ~SBUS();
-    	void begin();
-    	bool read(uint16_t* channels, uint8_t* failsafe, uint16_t* lostFrames);
-    	bool readCal(float* calChannels, uint8_t* failsafe, uint16_t* lostFrames);
-    	void write(uint16_t* channels);
-  	private:
-      std::string _tty;
-      int _fd;
-  		uint8_t _fpos;
-      const uint16_t SBUS_TIMEOUT = 10000;
-  		const float _sbusScale = 0.00122025625f;
-  		const float _sbusBias = -1.2098840f;
-  		const uint8_t _sbusHeader = 0x0F;
-  		const uint8_t _sbusFooter = 0x00;
-      const uint8_t _sbus2Footer = 0x04;
-  		const uint8_t _sbusLostFrame = 0x04;
-  		const uint8_t _sbusFailSafe = 0x08;
-  		static const uint8_t _payloadSize = 24;
-  		uint8_t _payload[_payloadSize];
+#include <asm/ioctls.h>
+#include <asm/termbits.h>
+#include <sys/ioctl.h>
 
-  		bool parse();
-      int bytesAvalaible();
+namespace SBUS
+{
+
+class SBUS
+{
+    public:
+        SBUS(std::string tty);
+        ~SBUS();
+        int begin();
+        bool read(uint16_t* channels, uint8_t* failsafe, uint16_t* lostFrames);
+        bool readCal(float* calChannels, uint8_t* failsafe, uint16_t* lostFrames);
+        void write(uint16_t* channels);
+    private:
+        std::string _tty;
+        int _fd;
+        uint8_t _fpos;
+        const uint16_t SBUS_TIMEOUT = 10000;
+        const float _sbusScale = 0.00122025625f;
+        const float _sbusBias = -1.2098840f;
+        const uint8_t _sbusHeader = 0x0F;
+        const uint8_t _sbusFooter = 0x00;
+        const uint8_t _sbus2Footer = 0x04;
+        const uint8_t _sbusLostFrame = 0x04;
+        const uint8_t _sbusFailSafe = 0x08;
+        static const uint8_t _payloadSize = 24;
+        uint8_t _payload[_payloadSize];
+
+        bool parse();
+        int bytesAvalaible();
 };
+
+}
 
 #endif

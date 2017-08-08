@@ -24,7 +24,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 
 #include "SBUS.h"
 
-SBUS::SBUS(std::string tty)
+using namespace std;
+
+namespace SBUS
+{
+
+SBUS::SBUS(string tty)
 {
     _tty = tty;
 }
@@ -35,50 +40,50 @@ SBUS::~SBUS()
 }
 
 /* starts the serial communication */
-void SBUS::begin()
+int SBUS::begin()
 {
     int r;
 
     // open file descriptor
-    _fd = open(_tty, O_RDWR| O_NOCTTY);
+    _fd = open(_tty.c_str(), O_RDWR| O_NOCTTY);
 
     if(_fd < 0 )
         cout << "Error " << errno << " opening " << _tty << ": " << strerror(errno) << endl;
 
     // other configuration
-    struct termios tty;
-    memset(&tty, 0, sizeof(tty));
+    // struct termios tty;
+    // memset(&tty, 0, sizeof(tty));
 
-    if(tcgetattr(_fd, &tty ) != 0 )
-        cout << "Error " << errno << " from tcgetattr: " << strerror(errno) << endl;
+    // if(tcgetattr(_fd, &tty ) != 0 )
+    //     cout << "Error " << errno << " from tcgetattr: " << strerror(errno) << endl;
 
-    tty.c_cflag         &=  ~PARENB;                        // Make 8n1
-    tty.c_cflag         &=  ~CSTOPB;
-    tty.c_cflag         &=  ~CSIZE;
-    tty.c_cflag         |=  CS8;
-    tty.c_cflag         &=  ~CRTSCTS;                       // no flow control
-    tty.c_lflag         =   0;                              // no signaling chars, no echo, no canonical processing
-    tty.c_oflag         =   0;                              // no remapping, no delays
-    tty.c_cc[VMIN]      =   0;                              // read doesn't block
-    tty.c_cc[VTIME]     =   5;                              // 0.5 seconds read timeout
+    // tty.c_cflag         &=  ~PARENB;                        // Make 8n1
+    // tty.c_cflag         &=  ~CSTOPB;
+    // tty.c_cflag         &=  ~CSIZE;
+    // tty.c_cflag         |=  CS8;
+    // tty.c_cflag         &=  ~CRTSCTS;                       // no flow control
+    // tty.c_lflag         =   0;                              // no signaling chars, no echo, no canonical processing
+    // tty.c_oflag         =   0;                              // no remapping, no delays
+    // tty.c_cc[VMIN]      =   0;                              // read doesn't block
+    // tty.c_cc[VTIME]     =   5;                              // 0.5 seconds read timeout
 
-    tty.c_cflag     |=  CREAD | CLOCAL;                     // turn on READ & ignore ctrl lines
-    tty.c_iflag     &=  ~(IXON | IXOFF | IXANY);            // turn off s/w flow ctrl
-    tty.c_lflag     &=  ~(ICANON | ECHO | ECHOE | ISIG);    // make raw
-    tty.c_oflag     &=  ~OPOST;                             // make raw
+    // tty.c_cflag     |=  CREAD | CLOCAL;                     // turn on READ & ignore ctrl lines
+    // tty.c_iflag     &=  ~(IXON | IXOFF | IXANY);            // turn off s/w flow ctrl
+    // tty.c_lflag     &=  ~(ICANON | ECHO | ECHOE | ISIG);    // make raw
+    // tty.c_oflag     &=  ~OPOST;                             // make raw
 
-    // flush port then apply attributes
-    tcflush(USB, TCIFLUSH);
+    // // flush port then apply attributes
+    // tcflush(_fd, TCIFLUSH);
 
-    if(tcsetattr(USB, TCSANOW, &tty) != 0)
-        cout << "Error " << errno << " from tcsetattr" << endl;
+    // if(tcsetattr(_fd, TCSANOW, &tty) != 0)
+    //     cout << "Error " << errno << " from tcsetattr" << endl;
 
     // set custom baudrate
     struct termios2 tio;
     r = ioctl(_fd, TCGETS2, &tio);
     if(r)
     {
-        perror("TCGETS2");
+        cerr << "TCGETS2" << endl;
         return -1;
     }
 
@@ -89,7 +94,7 @@ void SBUS::begin()
     r = ioctl(_fd, TCSETS2, &tio);
     if(r)
     {
-        perror("TCSETS2");
+        cerr << "TCSETS2" << endl;
         return -1;
     }
 }
@@ -106,7 +111,7 @@ void SBUS::begin()
     // begin the serial port for SBUS
     _bus->begin(100000,SERIAL_8E2_RXINV_TXINV);
   #endif*/
-}
+
 
 /* read the SBUS data and calibrate it to +/- 1 */
 bool SBUS::readCal(float* calChannels, uint8_t* failsafe, uint16_t* lostFrames)
@@ -114,7 +119,7 @@ bool SBUS::readCal(float* calChannels, uint8_t* failsafe, uint16_t* lostFrames)
     uint16_t channels[16];
 
     // read the SBUS data
-    if(read(&channels[0],failsafe,lostFrames))
+    if(read(&channels[0], failsafe, lostFrames))
     {
         // linear calibration
         for(uint8_t i = 0; i < 16; i++)
@@ -192,7 +197,7 @@ int SBUS::bytesAvalaible()
 /* parse the SBUS data */
 bool SBUS::parse()
 {
-    static elapsedMicros sbusTime = 0;
+    uint16_t sbusTime = 0; // TODO add correct elapsed time ?
 
     if(sbusTime > SBUS_TIMEOUT)
         {_fpos = 0;}
@@ -202,7 +207,7 @@ bool SBUS::parse()
     {
         sbusTime = 0;
         uint8_t c;
-        read(_fd, &c, 1);
+        ::read(_fd, &c, 1);
 
         // find the header
         if(_fpos == 0)
@@ -285,7 +290,9 @@ void SBUS::write(uint16_t* channels)
     // footer
     packet[24] = _sbusFooter;
 
-    int n_written = write(_fd, packet, sizeof(packet) -1)
+    int n_written = ::write(_fd, packet, sizeof(packet) -1);
 
     cout << n_written << " bytes written" << endl;
+}
+
 }
