@@ -22,6 +22,15 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include <string.h>     // string function definitions
+#include <unistd.h>     // UNIX standard function definitions
+#include <fcntl.h>      // File control definitions
+#include <errno.h>      // Error number definitions
+#include <inttypes.h>
+#include <asm/ioctls.h>
+#include <asm/termbits.h>
+#include <sys/ioctl.h>
+
 #include "SBUS.h"
 
 using namespace std;
@@ -89,6 +98,8 @@ int SBUS::begin()
 
     tio.c_cflag &= ~CBAUD;
     tio.c_cflag |= BOTHER;
+    tio.c_cflag |= CSTOPB; // 2 stop bits
+    tio.c_cflag |= PARENB; // enable parity bit, even by default
     tio.c_ispeed = tio.c_ospeed = 100000;
 
     r = ioctl(_fd, TCSETS2, &tio);
@@ -290,7 +301,7 @@ void SBUS::write(uint16_t* channels)
     // footer
     packet[24] = _sbusFooter;
 
-    int n_written = ::write(_fd, packet, sizeof(packet) -1);
+    int n_written = ::write(_fd, packet, sizeof(packet));
 
     cout << n_written << " bytes written" << endl;
 }
