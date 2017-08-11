@@ -57,35 +57,10 @@ int SBUS::begin()
     _fd = open(_tty.c_str(), O_RDWR| O_NOCTTY);
 
     if(_fd < 0 )
-        cout << "Error " << errno << " opening " << _tty << ": " << strerror(errno) << endl;
-
-    // other configuration
-    // struct termios tty;
-    // memset(&tty, 0, sizeof(tty));
-
-    // if(tcgetattr(_fd, &tty ) != 0 )
-    //     cout << "Error " << errno << " from tcgetattr: " << strerror(errno) << endl;
-
-    // tty.c_cflag         &=  ~PARENB;                        // Make 8n1
-    // tty.c_cflag         &=  ~CSTOPB;
-    // tty.c_cflag         &=  ~CSIZE;
-    // tty.c_cflag         |=  CS8;
-    // tty.c_cflag         &=  ~CRTSCTS;                       // no flow control
-    // tty.c_lflag         =   0;                              // no signaling chars, no echo, no canonical processing
-    // tty.c_oflag         =   0;                              // no remapping, no delays
-    // tty.c_cc[VMIN]      =   0;                              // read doesn't block
-    // tty.c_cc[VTIME]     =   5;                              // 0.5 seconds read timeout
-
-    // tty.c_cflag     |=  CREAD | CLOCAL;                     // turn on READ & ignore ctrl lines
-    // tty.c_iflag     &=  ~(IXON | IXOFF | IXANY);            // turn off s/w flow ctrl
-    // tty.c_lflag     &=  ~(ICANON | ECHO | ECHOE | ISIG);    // make raw
-    // tty.c_oflag     &=  ~OPOST;                             // make raw
-
-    // // flush port then apply attributes
-    // tcflush(_fd, TCIFLUSH);
-
-    // if(tcsetattr(_fd, TCSANOW, &tty) != 0)
-    //     cout << "Error " << errno << " from tcsetattr" << endl;
+    {
+        cerr << "Error " << errno << " opening " << _tty << ": " << strerror(errno) << endl;
+        return -1;
+    }
 
     // set custom baudrate
     struct termios2 tio;
@@ -108,21 +83,9 @@ int SBUS::begin()
         cerr << "TCSETS2" << endl;
         return -1;
     }
+
+    return 0;
 }
-
-  // initialize parsing state
-  /*_fpos = 0;
-  #if defined(__MK20DX128__) || defined(__MK20DX256__)  // Teensy 3.0 || Teensy 3.1/3.2
-    // begin the serial port for SBUS
-    _bus->begin(100000,SERIAL_8E1_RXINV_TXINV);
-    SERIALPORT = _bus;
-  #endif
-
-  #if defined(__MK64FX512__) || defined(__MK66FX1M0__) || defined(__MKL26Z64__)  // Teensy 3.5 || Teensy 3.6 || Teensy LC
-    // begin the serial port for SBUS
-    _bus->begin(100000,SERIAL_8E2_RXINV_TXINV);
-  #endif*/
-
 
 /* read the SBUS data and calibrate it to +/- 1 */
 bool SBUS::readCal(float* calChannels, uint8_t* failsafe, uint16_t* lostFrames)
@@ -302,8 +265,6 @@ void SBUS::write(uint16_t* channels)
     packet[24] = _sbusFooter;
 
     int n_written = ::write(_fd, packet, sizeof(packet));
-
-    cout << n_written << " bytes written" << endl;
 }
 
 }
