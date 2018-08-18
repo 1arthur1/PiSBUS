@@ -3,11 +3,12 @@ cmake_minimum_required(VERSION 3.0)
 project(sbus)
 
 set(SRCS
-    SBUS.cpp
+    src/SBUS.cpp
     )
 
 set(HEADERS
-    SBUS.h
+    src/SBUS.h
     )
 
 add_library(sbus STATIC ${SRCS} ${HEADERS})
+add_definitions(-D__RASPBERRYPI_ZERO_W__)
