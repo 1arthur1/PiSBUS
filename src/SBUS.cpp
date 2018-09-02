@@ -40,6 +40,9 @@ namespace SBUS
 SBUS::SBUS(string tty)
 {
     _tty = tty;
+
+    for(int i=0;i<_numChannels;i++)
+        _useWriteCoeff[i] = false;
 }
 
 SBUS::~SBUS()
@@ -72,9 +75,8 @@ int SBUS::begin()
     // initialize default scale factors and biases
     for (uint8_t i = 0; i < _numChannels; i++)
     {
-        setEndPoints(i,_defaultMin,_defaultMax);
+        setEndPoints(i, _defaultMin, _defaultMax);
     }
-
 
     // begin the serial port for SBUS
     #if defined(__MK20DX128__) || defined(__MK20DX256__)  // Teensy 3.0 || Teensy 3.1/3.2
@@ -292,14 +294,18 @@ void SBUS::writeCal(float* calChannels)
 {
     uint16_t channels[_numChannels] = {0};
     // linear calibration
-    if (calChannels) {
-        for (uint8_t i = 0; i < _numChannels; i++) {
-            if (_useWriteCoeff[i]) {
-                calChannels[i] = PolyVal(_writeLen[i],_writeCoeff[i],calChannels[i]);
+    if (calChannels)
+    {
+        for (uint8_t i=0; i<_numChannels; i++)
+        {
+            if (_useWriteCoeff[i])
+            {
+                calChannels[i] = PolyVal(_writeLen[i], _writeCoeff[i], calChannels[i]);
             }
             channels[i] = (calChannels[i] - _sbusBias[i])  / _sbusScale[i];
         }
     }
+
     write(channels);
 }
 
@@ -384,13 +390,16 @@ void SBUS::scaleBias(uint8_t channel)
 }
 
 float SBUS::PolyVal(size_t PolySize, float *Coefficients, float X) {
-    if (Coefficients) {
+    if (Coefficients)
+    {
         float Y = Coefficients[0];
-        for (uint8_t i = 1; i < PolySize; i++) {
+        for (uint8_t i = 1; i < PolySize; i++)
+        {
             Y = Y*X + Coefficients[i];
         }
         return(Y);
-    } else {
+    } else
+    {
         return 0;
     }
 }

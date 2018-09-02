@@ -63,8 +63,8 @@ class SBUS
         uint8_t _payload[_payloadSize];
         const uint8_t _sbusLostFrame = 0x04;
         const uint8_t _sbusFailSafe = 0x08;
-        const uint16_t _defaultMin = 172;
-        const uint16_t _defaultMax = 1811;
+        const uint16_t _defaultMin = 193;
+        const uint16_t _defaultMax = 1794;
         uint16_t _sbusMin[_numChannels];
         uint16_t _sbusMax[_numChannels];
         float _sbusScale[_numChannels];
